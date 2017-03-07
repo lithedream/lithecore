@@ -17,7 +17,7 @@ import java.util.WeakHashMap;
 
 /**
  * Class for that allows getter objects creation and use, to collect simple and complex properties into Lists and Maps
- *
+ * <p>
  * <pre>
  *  {@code
  *  List<T> list = ... ;
@@ -61,7 +61,7 @@ public class F {
     }
 
 
-    public static class Get<T, RET> implements Serializable{
+    public static class Get<T, RET> implements Serializable {
 
 
         private String method;
@@ -69,6 +69,7 @@ public class F {
 
         private transient volatile Reference<Method> wr = null;
 
+        private transient volatile Reference<Method> ww = null;
 
         private Get<Object, RET> next = null;
 
@@ -135,6 +136,51 @@ public class F {
             return (RET) value;
         }
 
+        public void put(T t, RET value) throws ThrownException {
+            if (next == null) {
+                Method wwValue = ww != null ? ww.get() : null;
+                if (wwValue == null || !wwValue.getDeclaringClass().isAssignableFrom(t.getClass())) {
+                    wwValue = gsetCacheWrite(t.getClass(), method);
+                    ww = new WeakReference<Method>(wwValue);
+                }
+                try {
+                    wwValue.invoke(t, value);
+                } catch (IllegalAccessException e) {
+                    throw new IllegalArgumentException(e);
+                } catch (InvocationTargetException e) {
+                    Throwable cause = e.getCause();
+                    if (cause instanceof RuntimeException) {
+                        throw (RuntimeException) cause;
+                    }
+                    if (cause instanceof Error) {
+                        throw (Error) cause;
+                    }
+                    throw new ThrownException(cause);
+                }
+            } else {
+                Method wrValue = wr != null ? wr.get() : null;
+                if (wrValue == null || !wrValue.getDeclaringClass().isAssignableFrom(t.getClass())) {
+                    wrValue = gsetCache(t.getClass(), method);
+                    wr = new WeakReference<Method>(wrValue);
+                }
+                Object val;
+                try {
+                    val = wrValue.invoke(t);
+                } catch (IllegalAccessException e) {
+                    throw new IllegalArgumentException(e);
+                } catch (InvocationTargetException e) {
+                    Throwable cause = e.getCause();
+                    if (cause instanceof RuntimeException) {
+                        throw (RuntimeException) cause;
+                    }
+                    if (cause instanceof Error) {
+                        throw (Error) cause;
+                    }
+                    throw new ThrownException(cause);
+                }
+                next.put(val, value);
+            }
+        }
 
         public <RET_LIST extends Collection<RET>> RET_LIST onList(Collection<T> c, RET_LIST k) throws ThrownException {
             for (T el : c) {
@@ -307,6 +353,33 @@ public class F {
             methodCache.put(k, new WeakReference<Method>(m));
         }
         return m;
+    }
+
+    private static Method gsetCacheWrite(Class<?> cl, String method) {
+        if (method.startsWith("get")) {
+            method = "set" + method.substring(3, method.length());
+        } else if (method.startsWith("is")) {
+            method = "set" + method.substring(2, method.length());
+        } else
+            throw new IllegalArgumentException("Method " + method + " doesn't start with get or is, I cannot find a set method in class " + cl.getName());
+
+        MethodKey k = new MethodKey(cl, method);
+        Reference<Method> methodRef = methodCache.get(k);
+        Method m = methodRef != null ? methodRef.get() : null;
+        if (m == null) {
+            for (Method me : cl.getMethods()) {
+                if (me.getParameterCount() == 1 && me.getName().equals(method)) {
+                    m = me;
+                    break;
+                }
+            }
+            if (m == null) {
+                throw new IllegalArgumentException("Method " + method + " not found in class " + cl.getName());
+            }
+            methodCache.put(k, new WeakReference<Method>(m));
+        }
+        return m;
+
     }
 
 
