@@ -38,7 +38,7 @@ public class X {
             if (obj == null) {
                 hc = hc * 37;
             } else {
-                hc = hc * 37 + o.hashCode();
+                hc = hc * 37 + obj.hashCode();
             }
         }
         return hc;
