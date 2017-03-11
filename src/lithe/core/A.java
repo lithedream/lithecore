@@ -26,6 +26,10 @@ public abstract class A implements Serializable, Comparable<A> {
 
     public abstract int size();
 
+    public A(){
+        objs=new Object[size()];
+    }
+
     @Override
     public boolean equals(Object obj) {
         if (!(obj instanceof A)) {
@@ -55,5 +59,10 @@ public abstract class A implements Serializable, Comparable<A> {
             }
         }
         return compare;
+    }
+
+    @Override
+    public int hashCode() {
+        return X.hash(objs);
     }
 }

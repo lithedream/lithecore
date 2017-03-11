@@ -21,8 +21,8 @@ import java.util.WeakHashMap;
  * <pre>
  *  {@code
  *  List<T> list = ... ;
- *  Get<T,PROPERTY2TYPE> get = F.$(list, F.y? null : _(list).getProperty1().getProperty2(),"getProperty1().getProperty2()");
- *  List<PROPERTY2TYPE> listValues = get.onList(list); //getProperty1().getProperty2() is called on every T in list
+ *  Gate<T,PROPERTY2TYPE> gate = F.$(list, F.y? null : _(list).getProperty1().getProperty2(),"getProperty1().getProperty2()");
+ *  List<PROPERTY2TYPE> listValues = gate.onList(list); //getProperty1().getProperty2() is called on every T in list
  *  }
  *  </pre>
  */
@@ -36,18 +36,18 @@ public class F {
     public static final boolean y = true;
 
 
-    public static <RET, T> Get<T, RET> $(Collection<T> col, RET ret, Object method) {
-        return new Get<T, RET>((String) method);
+    public static <RET, T> Gate<T, RET> $(Collection<T> col, RET ret, Object method) {
+        return new Gate<T, RET>((String) method);
     }
 
 
-    public static <RET, T> Get<T, RET> $(T obj, RET ret, Object method) {
-        return new Get<T, RET>((String) method);
+    public static <RET, T> Gate<T, RET> $(T obj, RET ret, Object method) {
+        return new Gate<T, RET>((String) method);
     }
 
 
-    public static <RET, T> Get<T, RET> $(Class<T> cl, RET ret, Object method) {
-        return new Get<T, RET>((String) method);
+    public static <RET, T> Gate<T, RET> $(Class<T> cl, RET ret, Object method) {
+        return new Gate<T, RET>((String) method);
     }
 
 
@@ -61,7 +61,7 @@ public class F {
     }
 
 
-    public static class Get<T, RET> implements Serializable {
+    public static final class Gate<T, RET> implements Serializable {
 
 
         private String method;
@@ -71,15 +71,15 @@ public class F {
 
         private transient volatile Reference<Method> ww = null;
 
-        private Get<Object, RET> next = null;
+        private Gate<Object, RET> next = null;
 
 
-        public Get(String method) {
+        public Gate(String method) {
             if (method.contains(".")) {
                 String[] split = method.split("\\.");
-                Get<Object, RET> a = null;
+                Gate<Object, RET> a = null;
                 for (int i = split.length; i-- > 1; ) {
-                    a = new Get<Object, RET>(split[i], a);
+                    a = new Gate<Object, RET>(split[i], a);
                 }
                 this.next = a;
                 method = split[0];
@@ -88,7 +88,7 @@ public class F {
         }
 
 
-        private Get(String method, Get<Object, RET> next) {
+        private Gate(String method, Gate<Object, RET> next) {
             setMethod(method);
             this.next = next;
         }
@@ -110,11 +110,7 @@ public class F {
 
         @SuppressWarnings("unchecked")
         public RET on(T t) throws ThrownException {
-            Method wrValue = wr != null ? wr.get() : null;
-            if (wrValue == null || !wrValue.getDeclaringClass().isAssignableFrom(t.getClass())) {
-                wrValue = gsetCache(t.getClass(), method);
-                wr = new WeakReference<Method>(wrValue);
-            }
+            Method wrValue = getReadMethodInstance(t);
             Object value;
             try {
                 value = wrValue.invoke(t);
@@ -138,11 +134,7 @@ public class F {
 
         public void put(T t, RET value) throws ThrownException {
             if (next == null) {
-                Method wwValue = ww != null ? ww.get() : null;
-                if (wwValue == null || !wwValue.getDeclaringClass().isAssignableFrom(t.getClass())) {
-                    wwValue = gsetCacheWrite(t.getClass(), method);
-                    ww = new WeakReference<Method>(wwValue);
-                }
+                Method wwValue = getWriteMethodInstance(t);
                 try {
                     wwValue.invoke(t, value);
                 } catch (IllegalAccessException e) {
@@ -158,11 +150,7 @@ public class F {
                     throw new ThrownException(cause);
                 }
             } else {
-                Method wrValue = wr != null ? wr.get() : null;
-                if (wrValue == null || !wrValue.getDeclaringClass().isAssignableFrom(t.getClass())) {
-                    wrValue = gsetCache(t.getClass(), method);
-                    wr = new WeakReference<Method>(wrValue);
-                }
+                Method wrValue = getReadMethodInstance(t);
                 Object val;
                 try {
                     val = wrValue.invoke(t);
@@ -178,8 +166,28 @@ public class F {
                     }
                     throw new ThrownException(cause);
                 }
-                next.put(val, value);
+                if (val != null) {
+                    next.put(val, value);
+                }
             }
+        }
+
+        private Method getReadMethodInstance(T t) {
+            Method wrValue = wr != null ? wr.get() : null;
+            if (wrValue == null || !wrValue.getDeclaringClass().isAssignableFrom(t.getClass())) {
+                wrValue = gsetCache(t.getClass(), method);
+                wr = new WeakReference<Method>(wrValue);
+            }
+            return wrValue;
+        }
+
+        private Method getWriteMethodInstance(T t) {
+            Method wwValue = ww != null ? ww.get() : null;
+            if (wwValue == null || !wwValue.getDeclaringClass().isAssignableFrom(t.getClass())) {
+                wwValue = gsetCacheWrite(t.getClass(), method);
+                ww = new WeakReference<Method>(wwValue);
+            }
+            return wwValue;
         }
 
         public <RET_LIST extends Collection<RET>> RET_LIST onList(Collection<T> c, RET_LIST k) throws ThrownException {
@@ -248,7 +256,7 @@ public class F {
             } else {
                 StringBuilder sb = new StringBuilder();
                 sb.append(getClass().getSimpleName()).append("[").append(method);
-                Get<Object, RET> curs = next;
+                Gate<Object, RET> curs = next;
                 while (curs != null) {
                     sb.append(".").append(curs.getMethod());
                     curs = curs.next;

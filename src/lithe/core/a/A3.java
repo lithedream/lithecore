@@ -2,7 +2,7 @@ package lithe.core.a;
 
 import lithe.core.A;
 
-public class A3<T0, T1, T2> extends A {
+public final class A3<T0, T1, T2> extends A {
 
     public A3(T0 t0, T1 t1, T2 t2) {
         super();

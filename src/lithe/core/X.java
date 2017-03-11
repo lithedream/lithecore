@@ -30,4 +30,17 @@ public class X {
     public static boolean notEqual(Object o1, Object o2) {
         return !equal(o1, o2);
     }
+
+
+    public static int hash(Object... o) {
+        int hc = 17;
+        for (Object obj : o) {
+            if (obj == null) {
+                hc = hc * 37;
+            } else {
+                hc = hc * 37 + o.hashCode();
+            }
+        }
+        return hc;
+    }
 }
