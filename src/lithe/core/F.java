@@ -16,13 +16,34 @@ import java.util.Set;
 import java.util.WeakHashMap;
 
 /**
- * Class for that allows getter objects creation and use, to collect simple and complex properties into Lists and Maps
+ * Class for that allows getter objects creation and use, to collect simple and complex properties into Lists and Maps.
+ * It is also possible to represent method invocations for later use
  * <p>
  * <pre>
  *  {@code
  *  List<T> list = ... ;
- *  Gate<T,PROPERTY2TYPE> gate = F.$(list, F.y? null : _(list).getProperty1().getProperty2(),"getProperty1().getProperty2()");
+ *  Gate<T,PROPERTY2TYPE> gate = F.$(list).gate(F.y? null : F._(list).getProperty1().getProperty2(),"getProperty1().getProperty2()");
  *  List<PROPERTY2TYPE> listValues = gate.onList(list); //getProperty1().getProperty2() is called on every T in list
+ *
+ *  ...
+ *  SOMEOBJECT obj = ...;
+ *  Erg<SOMEOBJECT> erg = F.$(obj);
+ *  Call<SOMEOBJECT> call = erg.call("someMethod");
+ *  if (F.never) {
+ *      call.__.someMethod();
+ *  }
+ *
+ *  call.on(obj); // calls obj.someMethod();
+ *
+ *  ...
+ *
+ *  Call<SOMEOBJECT> arc2 = F.$(obj).call();
+ *  if (arc2._("someMethod2")){
+ *      arc2.__.someMethod2();
+ *  }
+ *  arc2.on(obj); // calls obj.someMethod2();
+ *
+ *
  *  }
  *  </pre>
  */
@@ -35,21 +56,19 @@ public class F {
 
     public static final boolean y = true;
 
+    public static final boolean never = false;
 
-    public static <RET, T> Gate<T, RET> $(Collection<T> col, RET ret, Object method) {
-        return new Gate<T, RET>((String) method);
+    public static <T> Erg<T> $(T obj) {
+        return (Erg<T>) Erg.getInstance();
     }
 
-
-    public static <RET, T> Gate<T, RET> $(T obj, RET ret, Object method) {
-        return new Gate<T, RET>((String) method);
+    public static <T> Erg<T> $(Class<T> obj) {
+        return (Erg<T>) Erg.getInstance();
     }
 
-
-    public static <RET, T> Gate<T, RET> $(Class<T> cl, RET ret, Object method) {
-        return new Gate<T, RET>((String) method);
+    public static <T> Erg<T> $(Collection<T> obj) {
+        return (Erg<T>) Erg.getInstance();
     }
-
 
     public static <T> T _(Collection<T> obj) {
         return null;
@@ -63,16 +82,13 @@ public class F {
 
     public static final class Gate<T, RET> implements Serializable {
 
-
         private String method;
-
 
         private transient volatile Reference<Method> wr = null;
 
         private transient volatile Reference<Method> ww = null;
 
         private Gate<Object, RET> next = null;
-
 
         public Gate(String method) {
             if (method.contains(".")) {
@@ -390,5 +406,145 @@ public class F {
 
     }
 
+
+    public static final class Erg<T> {
+
+        private static final Erg<Object> instance = new Erg<Object>();
+
+        private Erg() {
+
+        }
+
+        public final T __ = null;
+
+        public <RET> Gate<T, RET> gate(RET ret, String method) {
+            return new Gate<T, RET>(method);
+        }
+
+        public Call<T> call() {
+            return new Call<T>();
+        }
+
+        public Call<T> call(String method) {
+            return new Call<T>(method);
+        }
+
+        public static final Erg<Object> getInstance() {
+            return instance;
+        }
+
+    }
+
+    public static class Call<T> {
+
+        private String method;
+
+        public final T __ = null;
+
+        private transient volatile Reference<Method> wr = null;
+
+        public Call() {
+
+        }
+
+        public boolean _(String method) {
+            init(method);
+            return false;
+        }
+
+        private Call<Object> next = null;
+
+        public Call(String method) {
+            init(method);
+        }
+
+        private void init(String method) {
+            if (method.contains(".")) {
+                String[] split = method.split("\\.");
+                Call<Object> a = null;
+                for (int i = split.length; i-- > 1; ) {
+                    a = new Call<Object>(split[i], a);
+                }
+                this.next = a;
+                method = split[0];
+            }
+            setMethod(method);
+        }
+
+
+        private Call(String method, Call<Object> next) {
+            setMethod(method);
+            this.next = next;
+        }
+
+
+        private void setMethod(String method) {
+            if (method.endsWith("()")) {
+                this.method = method.substring(0, method.length() - 2);
+            } else {
+                this.method = method;
+            }
+        }
+
+        public String getMethod() {
+            return method;
+        }
+
+        @SuppressWarnings("unchecked")
+        public void on(T t) throws ThrownException {
+            Method wrValue = getMethodInstance(t);
+            Object value;
+            try {
+                value = wrValue.invoke(t);
+            } catch (IllegalAccessException e) {
+                throw new IllegalArgumentException(e);
+            } catch (InvocationTargetException e) {
+                Throwable cause = e.getCause();
+                if (cause instanceof RuntimeException) {
+                    throw (RuntimeException) cause;
+                }
+                if (cause instanceof Error) {
+                    throw (Error) cause;
+                }
+                throw new ThrownException(cause);
+            }
+            if (next != null && value != null) {
+                next.on(value);
+            }
+        }
+
+        private Method getMethodInstance(T t) {
+            Method wrValue = wr != null ? wr.get() : null;
+            if (wrValue == null || !wrValue.getDeclaringClass().isAssignableFrom(t.getClass())) {
+                wrValue = gsetCache(t.getClass(), method);
+                wr = new WeakReference<Method>(wrValue);
+            }
+            return wrValue;
+        }
+
+        public void onList(Collection<T> c) throws ThrownException {
+            for (T el : c) {
+                on(el);
+            }
+        }
+
+        @Override
+        public String toString() {
+            if (next == null) {
+                return getClass().getSimpleName() + "[" + method + "]";
+            } else {
+                StringBuilder sb = new StringBuilder();
+                sb.append(getClass().getSimpleName()).append("[").append(method);
+                Call<Object> curs = next;
+                while (curs != null) {
+                    sb.append(".").append(curs.getMethod());
+                    curs = curs.next;
+                }
+                sb.append("]");
+                return sb.toString();
+            }
+        }
+
+    }
 
 }
