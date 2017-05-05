@@ -16,13 +16,15 @@ import java.util.Set;
 import java.util.WeakHashMap;
 
 /**
- * Class for that allows getter objects creation and use, to collect simple and complex properties into Lists and Maps.
- * It is also possible to represent method invocations for later use
+ * Class for that allows getter objects creation and use, to collect simple and complex properties into Lists and Maps. It is also possible
+ * to represent method invocations for later use
  * <p>
  * <pre>
  *  {@code
+ *
  *  List<T> list = ... ;
  *  Gate<T,PROPERTY2TYPE> gate = F.$(list).gate(F.y? null : F._(list).getProperty1().getProperty2(),"getProperty1().getProperty2()");
+ *
  *  List<PROPERTY2TYPE> listValues = gate.onList(list); //getProperty1().getProperty2() is called on every T in list
  *
  *  ...
@@ -35,37 +37,35 @@ import java.util.WeakHashMap;
  *
  *  call.on(obj); // calls obj.someMethod();
  *
+ *
  *  ...
+ *  SOMEOBJECT obj = ...;
+ *  Demon<T,RETURNTYPE> demon = F.$(obj).demon(F.y? null : obj.methodWithParams(F._(Parameter1.class),F._(Parameter2.class)),"methodWithParams()");
  *
- *  Call<SOMEOBJECT> arc2 = F.$(obj).call();
- *  if (arc2._("someMethod2")){
- *      arc2.__.someMethod2();
+ *  Parameter1 parameter1=...;
+ *  Parameter2 parameter2=...;
+ *  RETURNTYPE ret=demon.on(obj,parameter1,parameter2); // calls obj.methodWithParams(parameter1,parameter2)
+ *
  *  }
- *  arc2.on(obj); // calls obj.someMethod2();
- *
- *
- *  }
- *  </pre>
+ * </pre>
  */
 public class F {
-
-
-    private static final Map<MethodKey, Reference<Method>> methodCache = Collections
-            .synchronizedMap(new WeakHashMap<MethodKey, Reference<Method>>());
-
 
     public static final boolean y = true;
 
     public static final boolean never = false;
 
+    @SuppressWarnings("unchecked")
     public static <T> Erg<T> $(T obj) {
         return (Erg<T>) Erg.getInstance();
     }
 
+    @SuppressWarnings("unchecked")
     public static <T> Erg<T> $(Class<T> obj) {
         return (Erg<T>) Erg.getInstance();
     }
 
+    @SuppressWarnings("unchecked")
     public static <T> Erg<T> $(Collection<T> obj) {
         return (Erg<T>) Erg.getInstance();
     }
@@ -74,136 +74,41 @@ public class F {
         return null;
     }
 
-
     public static <T> T _(Class<T> obj) {
         return null;
     }
 
-
     public static final class Gate<T, RET> implements Serializable {
 
-        private String method;
+        /**
+         *
+         */
+        private static final long serialVersionUID = 1L;
 
-        private transient volatile Reference<Method> wr = null;
+        private Demon<T, RET> get = null;
 
-        private transient volatile Reference<Method> ww = null;
+        private Demon<T, RET> set = null;
 
-        private Gate<Object, RET> next = null;
-
-        public Gate(String method) {
-            if (method.contains(".")) {
-                String[] split = method.split("\\.");
-                Gate<Object, RET> a = null;
-                for (int i = split.length; i-- > 1; ) {
-                    a = new Gate<Object, RET>(split[i], a);
-                }
-                this.next = a;
-                method = split[0];
-            }
-            setMethod(method);
+        private Gate(String method) {
+            get = new Demon<T, RET>(method);
         }
 
-
-        private Gate(String method, Gate<Object, RET> next) {
-            setMethod(method);
-            this.next = next;
-        }
-
-
-        private void setMethod(String method) {
-            if (method.endsWith("()")) {
-                this.method = method.substring(0, method.length() - 2);
-            } else {
-                this.method = method;
-            }
-        }
-
-
-        public String getMethod() {
-            return method;
-        }
-
-
-        @SuppressWarnings("unchecked")
         public RET on(T t) throws ThrownException {
-            Method wrValue = getReadMethodInstance(t);
-            Object value;
-            try {
-                value = wrValue.invoke(t);
-            } catch (IllegalAccessException e) {
-                throw new IllegalArgumentException(e);
-            } catch (InvocationTargetException e) {
-                Throwable cause = e.getCause();
-                if (cause instanceof RuntimeException) {
-                    throw (RuntimeException) cause;
-                }
-                if (cause instanceof Error) {
-                    throw (Error) cause;
-                }
-                throw new ThrownException(cause);
-            }
-            if (next != null && value != null) {
-                return next.on(value);
-            }
-            return (RET) value;
+            return get.on(t);
         }
 
         public void put(T t, RET value) throws ThrownException {
-            if (next == null) {
-                Method wwValue = getWriteMethodInstance(t);
-                try {
-                    wwValue.invoke(t, value);
-                } catch (IllegalAccessException e) {
-                    throw new IllegalArgumentException(e);
-                } catch (InvocationTargetException e) {
-                    Throwable cause = e.getCause();
-                    if (cause instanceof RuntimeException) {
-                        throw (RuntimeException) cause;
-                    }
-                    if (cause instanceof Error) {
-                        throw (Error) cause;
-                    }
-                    throw new ThrownException(cause);
-                }
-            } else {
-                Method wrValue = getReadMethodInstance(t);
-                Object val;
-                try {
-                    val = wrValue.invoke(t);
-                } catch (IllegalAccessException e) {
-                    throw new IllegalArgumentException(e);
-                } catch (InvocationTargetException e) {
-                    Throwable cause = e.getCause();
-                    if (cause instanceof RuntimeException) {
-                        throw (RuntimeException) cause;
-                    }
-                    if (cause instanceof Error) {
-                        throw (Error) cause;
-                    }
-                    throw new ThrownException(cause);
-                }
-                if (val != null) {
-                    next.put(val, value);
-                }
+            if (set == null) {
+                String toRename = get.getLastMethod();
+                if (toRename.startsWith("get")) {
+                    toRename = "set" + toRename.substring(3, toRename.length());
+                } else if (toRename.startsWith("is")) {
+                    toRename = "set" + toRename.substring(2, toRename.length());
+                } else
+                    throw new IllegalArgumentException("Method " + toRename + " doesn't start with get or is");
+                set = get.copy().renameLastMethod(toRename);
             }
-        }
-
-        private Method getReadMethodInstance(T t) {
-            Method wrValue = wr != null ? wr.get() : null;
-            if (wrValue == null || !wrValue.getDeclaringClass().isAssignableFrom(t.getClass())) {
-                wrValue = gsetCache(t.getClass(), method);
-                wr = new WeakReference<Method>(wrValue);
-            }
-            return wrValue;
-        }
-
-        private Method getWriteMethodInstance(T t) {
-            Method wwValue = ww != null ? ww.get() : null;
-            if (wwValue == null || !wwValue.getDeclaringClass().isAssignableFrom(t.getClass())) {
-                wwValue = gsetCacheWrite(t.getClass(), method);
-                ww = new WeakReference<Method>(wwValue);
-            }
-            return wwValue;
+            set.on(t, value);
         }
 
         public <RET_LIST extends Collection<RET>> RET_LIST onList(Collection<T> c, RET_LIST k) throws ThrownException {
@@ -212,7 +117,6 @@ public class F {
             }
             return k;
         }
-
 
         public <RET_MAP extends Map<T, RET>> RET_MAP onMap(Collection<T> c, RET_MAP k) throws ThrownException {
             for (T el : c) {
@@ -233,7 +137,7 @@ public class F {
                 RET val = on(el);
                 List<T> list = k.get(val);
                 if (list == null) {
-                    list = new ArrayList<>();
+                    list = new ArrayList<T>();
                     k.put(val, list);
                 }
                 list.add(el);
@@ -241,16 +145,13 @@ public class F {
             return k;
         }
 
-
         public List<RET> onList(Collection<T> c) throws ThrownException {
             return onList(c, new ArrayList<RET>());
         }
 
-
         public Set<RET> onSet(Collection<T> c) throws ThrownException {
             return onList(c, new LinkedHashSet<RET>());
         }
-
 
         public Map<T, RET> onMap(Collection<T> c) throws ThrownException {
             return onMap(c, new LinkedHashMap<T, RET>());
@@ -264,150 +165,44 @@ public class F {
             return onValueMapList(c, new LinkedHashMap<RET, List<T>>());
         }
 
-
         @Override
         public String toString() {
-            if (next == null) {
-                return getClass().getSimpleName() + "[" + method + "]";
-            } else {
-                StringBuilder sb = new StringBuilder();
-                sb.append(getClass().getSimpleName()).append("[").append(method);
-                Gate<Object, RET> curs = next;
-                while (curs != null) {
-                    sb.append(".").append(curs.getMethod());
-                    curs = curs.next;
-                }
-                sb.append("]");
-                return sb.toString();
-            }
+            return getClass().getSimpleName() + ":" + get.toString();
         }
-
 
     }
 
-
     public static class ThrownException extends RuntimeException {
-
 
         /**
          *
          */
         private static final long serialVersionUID = 1L;
 
-
         private Throwable target;
 
-
-        public ThrownException(Throwable t) {
+        private ThrownException(Throwable t) {
             super((Throwable) null);
             this.target = t;
         }
 
-
         public Throwable getTarget() {
             return target;
         }
-
 
         @Override
         public synchronized Throwable getCause() {
             return target;
         }
 
-
     }
 
-
-    private static class MethodKey {
-
-
-        private Class<?> cls;
-
-
-        private String methodName;
-
-
-        private int hashCode;
-
-
-        public MethodKey(Class<?> cls, String methodName) {
-            this.cls = cls;
-            this.methodName = methodName;
-            this.hashCode = methodName.length();
-        }
-
+    public static final class Erg<T> implements Serializable {
 
         /**
-         * Checks for equality.
          *
-         * @param obj object to be tested for equality
-         * @return true, if the object describes the same Method.
          */
-        public boolean equals(Object obj) {
-            if (!(obj instanceof MethodKey)) {
-                return false;
-            }
-            MethodKey md = (MethodKey) obj;
-            return methodName.equals(md.methodName) && cls.equals(md.cls);
-        }
-
-
-        public int hashCode() {
-            return hashCode;
-        }
-
-
-        @Override
-        public String toString() {
-            return getClass().getSimpleName() + "[" + cls.getName() + "." + methodName + "]";
-        }
-    }
-
-
-    private static Method gsetCache(Class<?> cl, String method) {
-        MethodKey k = new MethodKey(cl, method);
-        Reference<Method> methodRef = methodCache.get(k);
-        Method m = methodRef != null ? methodRef.get() : null;
-        if (m == null) {
-            try {
-                m = cl.getMethod(method);
-            } catch (NoSuchMethodException e) {
-                throw new IllegalArgumentException(e);
-            }
-            methodCache.put(k, new WeakReference<Method>(m));
-        }
-        return m;
-    }
-
-    private static Method gsetCacheWrite(Class<?> cl, String method) {
-        if (method.startsWith("get")) {
-            method = "set" + method.substring(3, method.length());
-        } else if (method.startsWith("is")) {
-            method = "set" + method.substring(2, method.length());
-        } else
-            throw new IllegalArgumentException("Method " + method + " doesn't start with get or is, I cannot find a set method in class " + cl.getName());
-
-        MethodKey k = new MethodKey(cl, method);
-        Reference<Method> methodRef = methodCache.get(k);
-        Method m = methodRef != null ? methodRef.get() : null;
-        if (m == null) {
-            for (Method me : cl.getMethods()) {
-                if (me.getParameterCount() == 1 && me.getName().equals(method)) {
-                    m = me;
-                    break;
-                }
-            }
-            if (m == null) {
-                throw new IllegalArgumentException("Method " + method + " not found in class " + cl.getName());
-            }
-            methodCache.put(k, new WeakReference<Method>(m));
-        }
-        return m;
-
-    }
-
-
-    public static final class Erg<T> {
+        private static final long serialVersionUID = 1L;
 
         private static final Erg<Object> instance = new Erg<Object>();
 
@@ -421,12 +216,20 @@ public class F {
             return new Gate<T, RET>(method);
         }
 
-        public Call<T> call() {
-            return new Call<T>();
-        }
+        // public Call<T> call() {
+        // return new Call<T>();
+        // }
 
         public Call<T> call(String method) {
             return new Call<T>(method);
+        }
+
+        public <RET> Demon<T, RET> demon(RET ret, String method) {
+            return new Demon<T, RET>(method);
+        }
+
+        public Demon<T, Void> demon(String method) {
+            return new Demon<T, Void>(method);
         }
 
         public static final Erg<Object> getInstance() {
@@ -435,35 +238,73 @@ public class F {
 
     }
 
-    public static class Call<T> {
+    public static final class Call<T> implements Serializable {
 
-        private String method;
+        /**
+         *
+         */
+        private static final long serialVersionUID = 1L;
 
         public final T __ = null;
 
-        private transient volatile Reference<Method> wr = null;
+        private Demon<T, Void> demon = null;
 
-        public Call() {
+        // private Call() {
+        //
+        // }
 
+        private Call(String method) {
+            demon = new Demon<T, Void>(method);
         }
 
-        public boolean _(String method) {
-            init(method);
-            return false;
+        // public boolean _(String method) {
+        // demon = new Demon<T, Void>(method);
+        // return false;
+        // }
+
+        public void on(T t) throws ThrownException {
+            demon.on(t);
         }
 
-        private Call<Object> next = null;
-
-        public Call(String method) {
-            init(method);
+        public void onExtra(T t, Object... params) throws ThrownException {
+            demon.on(t, params);
         }
 
-        private void init(String method) {
+        public void onList(Collection<T> c) throws ThrownException {
+            for (T el : c) {
+                demon.on(el);
+            }
+        }
+
+        @Override
+        public String toString() {
+            return getClass().getSimpleName() + ":" + demon;
+        }
+
+    }
+
+    public static final class Demon<T, RET> implements Serializable {
+
+        /**
+         *
+         */
+        private static final long serialVersionUID = 1L;
+
+        private static final Map<MethodKey, Reference<Method>> methodCache = Collections
+                .synchronizedMap(new WeakHashMap<MethodKey, Reference<Method>>());
+
+        private String method;
+
+        private transient Reference<Method> wr = null;
+
+        private Demon<Object, RET> next = null;
+
+        private Demon(String method) {
             if (method.contains(".")) {
                 String[] split = method.split("\\.");
-                Call<Object> a = null;
+                Demon<Object, RET> a = null;
                 for (int i = split.length; i-- > 1; ) {
-                    a = new Call<Object>(split[i], a);
+                    a = new Demon<Object, RET>(split[i], a);
                 }
                 this.next = a;
                 method = split[0];
@@ -471,31 +312,21 @@ public class F {
             setMethod(method);
         }
 
-
-        private Call(String method, Call<Object> next) {
+        private Demon(String method, Demon<Object, RET> next) {
             setMethod(method);
             this.next = next;
         }
 
-
         private void setMethod(String method) {
-            if (method.endsWith("()")) {
-                this.method = method.substring(0, method.length() - 2);
-            } else {
-                this.method = method;
-            }
-        }
-
-        public String getMethod() {
-            return method;
+            this.method = method.endsWith("()") ? method.substring(0, method.length() - 2) : method;
         }
 
         @SuppressWarnings("unchecked")
-        public void on(T t) throws ThrownException {
-            Method wrValue = getMethodInstance(t);
-            Object value;
+        public RET on(T t, Object... params) throws ThrownException {
+            Object val;
             try {
-                value = wrValue.invoke(t);
+                Method wrValue = getMethodInstance(t, (next != null || params == null) ? 0 : params.length);
+                val = next == null ? wrValue.invoke(t, params) : wrValue.invoke(t);
             } catch (IllegalAccessException e) {
                 throw new IllegalArgumentException(e);
             } catch (InvocationTargetException e) {
@@ -508,24 +339,21 @@ public class F {
                 }
                 throw new ThrownException(cause);
             }
-            if (next != null && value != null) {
-                next.on(value);
+
+            if (next == null || val == null) {
+                return (RET) val;
             }
+            return next.on(val, params);
         }
 
-        private Method getMethodInstance(T t) {
+        private Method getMethodInstance(T t, int numParams) {
             Method wrValue = wr != null ? wr.get() : null;
-            if (wrValue == null || !wrValue.getDeclaringClass().isAssignableFrom(t.getClass())) {
-                wrValue = gsetCache(t.getClass(), method);
+            if (wrValue == null || wrValue.getParameterTypes().length != numParams
+                    || !wrValue.getDeclaringClass().isAssignableFrom(t.getClass())) {
+                wrValue = gsetCache(t.getClass(), method, numParams);
                 wr = new WeakReference<Method>(wrValue);
             }
             return wrValue;
-        }
-
-        public void onList(Collection<T> c) throws ThrownException {
-            for (T el : c) {
-                on(el);
-            }
         }
 
         @Override
@@ -535,10 +363,102 @@ public class F {
             } else {
                 StringBuilder sb = new StringBuilder();
                 sb.append(getClass().getSimpleName()).append("[").append(method);
-                Call<Object> curs = next;
+                Demon<Object, RET> curs = next;
                 while (curs != null) {
-                    sb.append(".").append(curs.getMethod());
+                    sb.append(".").append(curs.method);
                     curs = curs.next;
+                }
+                sb.append("]");
+                return sb.toString();
+            }
+        }
+
+        private static Method gsetCache(Class<?> cl, String method, int numParams) {
+            MethodKey k = new MethodKey(cl, method, numParams);
+            Reference<Method> methodRef = methodCache.get(k);
+            Method m = methodRef != null ? methodRef.get() : null;
+            if (m == null) {
+                if (numParams == 0) {
+                    try {
+                        m = cl.getMethod(method);
+                    } catch (NoSuchMethodException e) {
+                        throw new IllegalArgumentException(e);
+                    }
+                } else {
+                    for (Method me : cl.getMethods()) {
+                        if (me.getName().equals(method) && me.getParameterTypes().length == numParams) {
+                            m = me;
+                            break;
+                        }
+                    }
+                    if (m == null) {
+                        throw new IllegalArgumentException("Method " + method + " not found in class " + cl.getName());
+                    }
+                }
+                methodCache.put(k, new WeakReference<Method>(m));
+            }
+            return m;
+        }
+
+        protected Demon<T, RET> copy() {
+            return new Demon<T, RET>(method, next == null ? null : next.copy());
+        }
+
+        protected String getLastMethod() {
+            return next == null ? method : next.getLastMethod();
+        }
+
+        protected Demon<T, RET> renameLastMethod(String toRename) {
+            if (next == null) {
+                method = toRename;
+                wr = null;
+            } else {
+                next.renameLastMethod(toRename);
+            }
+            return this;
+        }
+
+        private static class MethodKey {
+
+            private Class<?> cls;
+
+            private String methodName;
+
+            private int numParams;
+
+            private int hashCode;
+
+            public MethodKey(Class<?> cls, String methodName, int numParams) {
+                this.cls = cls;
+                this.methodName = methodName;
+                this.numParams = numParams;
+                this.hashCode = methodName.length();
+            }
+
+            /**
+             * Checks for equality.
+             *
+             * @param obj object to be tested for equality
+             * @return true, if the object describes the same Method.
+             */
+            public boolean equals(Object obj) {
+                if (!(obj instanceof MethodKey)) {
+                    return false;
+                }
+                MethodKey md = (MethodKey) obj;
+                return methodName.equals(md.methodName) && numParams == md.numParams && cls.equals(md.cls);
+            }
+
+            public int hashCode() {
+                return hashCode;
+            }
+
+            @Override
+            public String toString() {
+                StringBuilder sb = new StringBuilder();
+                sb.append(getClass().getSimpleName()).append("[").append(cls.getName()).append(".").append(methodName);
+                if (numParams > 0) {
+                    sb.append("(").append(numParams).append(")");
                 }
                 sb.append("]");
                 return sb.toString();
