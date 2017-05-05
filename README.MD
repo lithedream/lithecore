@@ -17,13 +17,14 @@ I like to express a lot of logic by writing as little as possible. This library 
 * X: general utility static methods
 
 ## Code Example
-
+```java
 List<T> list = ... ;
 Gate<T,PROPERTY2TYPE> gate = F.$(list).gate(F.y? null : F._(list).getProperty1().getProperty2(),"getProperty1().getProperty2()");
 
 List<PROPERTY2TYPE> listValues = gate.onList(list); //getProperty1().getProperty2() is called on every T in list
+```
 
-...
+```java
 SOMEOBJECT obj = ...;
 Erg<SOMEOBJECT> erg = F.$(obj);
 Call<SOMEOBJECT> call = erg.call("someMethod");
@@ -32,14 +33,16 @@ if (F.never) {
 }
 
 call.on(obj); // calls obj.someMethod();
+```
 
-...
+```java
 SOMEOBJECT obj = ...;
 Demon<T,RETURNTYPE> demon = F.$(obj).demon(F.y? null : obj.methodWithParams(F._(Parameter1.class),F._(Parameter2.class)),"methodWithParams()");
 
 Parameter1 parameter1=...;
 Parameter2 parameter2=...;
 RETURNTYPE ret=demon.on(obj,parameter1,parameter2); // calls obj.methodWithParams(parameter1,parameter2)
+```
 
 ## Author
 
