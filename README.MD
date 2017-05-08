@@ -19,7 +19,7 @@ I like to express a lot of logic by writing as little as possible. This library 
 ## Code Example
 ```java
 List<T> list = ... ;
-Gate<T,PROPERTY2TYPE> gate = F.$(list).gate(F.y? null : F._(list).getProperty1().getProperty2(),"getProperty1().getProperty2()");
+Gate<T,PROPERTY2TYPE> gate = F.$(list).gate(F.y? null : F.o(list).getProperty1().getProperty2(),"getProperty1().getProperty2()");
 
 List<PROPERTY2TYPE> listValues = gate.onList(list); //getProperty1().getProperty2() is called on every T in list
 ```
@@ -37,7 +37,7 @@ call.on(obj); // calls obj.someMethod();
 
 ```java
 SOMEOBJECT obj = ...;
-Demon<T,RETURNTYPE> demon = F.$(obj).demon(F.y? null : obj.methodWithParams(F._(Parameter1.class),F._(Parameter2.class)),"methodWithParams()");
+Demon<T,RETURNTYPE> demon = F.$(obj).demon(F.y? null : obj.methodWithParams(F.o(Parameter1.class),F.o(Parameter2.class)),"methodWithParams()");
 
 Parameter1 parameter1=...;
 Parameter2 parameter2=...;
