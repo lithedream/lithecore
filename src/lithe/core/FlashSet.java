@@ -1,11 +1,7 @@
 package lithe.core;
 
 import java.io.Serializable;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.NoSuchElementException;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Set implementation for really small sets and minimal memory footprint.
@@ -317,13 +313,26 @@ public final class FlashSet<K> implements Set<K>, Serializable {
 
     @Override
     public boolean retainAll(Collection<?> c) {
-        throw new UnsupportedOperationException();
+        boolean changed = false;
+        Iterator<K> iterator = iterator();
+        while (iterator.hasNext()) {
+            if (!c.contains(iterator.next())) {
+                iterator.remove();
+                changed = true;
+            }
+        }
+        return changed;
     }
 
 
     @Override
     public boolean removeAll(Collection<?> c) {
-        throw new UnsupportedOperationException();
+        //I can do better than this
+        boolean changed = false;
+        for (Object o : c) {
+            changed |= remove(o);
+        }
+        return changed;
     }
 
 

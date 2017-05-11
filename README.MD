@@ -11,7 +11,7 @@ I like to express a lot of logic by writing as little as possible. This library 
 ## API Reference
 
 * A: fixed size arrays (A2, A3, A4, A5) with generics to enforce type safety, with static methods to create and organize them in Lists, Sets and Maps
-* F: class for that allows getter objects creation and use, to collect simple and complex properties into Lists and Maps; it is also possible to represent method invocations for later use
+* F: class that allows getter objects creation and use, to collect simple and complex properties into Lists and Maps; it is also possible to represent method invocations for later use
 * FlashMap: Map implementation optimized for memory and really small datasets
 * FlashSet: Set implementation optimized for memory and really small datasets
 * X: general utility static methods
