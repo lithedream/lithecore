@@ -111,10 +111,16 @@ public class X {
         if (equal(cl, BigDecimal.class)) return (K) toBigDecimal(o);
         if (equal(cl, Double.class)) return (K) toDouble(o);
         if (equal(cl, Boolean.class)) return (K) toBoolean(o);
+        if (Enum.class.isAssignableFrom(cl)) return (K) toEnum((Class<? extends Enum>) cl, o);
         throw new IllegalArgumentException("X.to:" + o.getClass() + " -> " + cl);
     }
 
-    private static BigDecimal toBigDecimal(Object o) {
+    public static <K extends Enum> K toEnum(Class<K> cl, Object o) {
+        if (o == null || cl.equals(o.getClass())) return (K) o;
+        return (K) Enum.valueOf(cl, o.toString());
+    }
+
+    public static BigDecimal toBigDecimal(Object o) {
         if (o == null || o instanceof BigDecimal) return (BigDecimal) o;
         if (o instanceof String) return new BigDecimal((String) o);
         if (o instanceof Long) return BigDecimal.valueOf((Long) o);
@@ -124,7 +130,7 @@ public class X {
         throw new IllegalArgumentException("X.to:" + o.getClass() + " -> " + BigDecimal.class);
     }
 
-    private static Boolean toBoolean(Object o) {
+    public static Boolean toBoolean(Object o) {
         if (o == null || o instanceof Boolean) return (Boolean) o;
         if (o instanceof String) return "".equals(o) ? null : (Boolean.valueOf((String) o) || "1".equals(o));
         if (o instanceof Integer) return Boolean.valueOf(((Integer) o).compareTo(Integer.valueOf(1)) == 0);
@@ -134,7 +140,7 @@ public class X {
         throw new IllegalArgumentException("X.to:" + o.getClass() + " -> " + Boolean.class);
     }
 
-    private static Double toDouble(Object o) {
+    public static Double toDouble(Object o) {
         if (o == null || o instanceof Double) return (Double) o;
         if (o instanceof String) return Double.valueOf((String) o);
         if (o instanceof BigDecimal) return Double.valueOf(((BigDecimal) o).doubleValue());
@@ -145,7 +151,7 @@ public class X {
     }
 
 
-    private static Integer toInteger(Object o) {
+    public static Integer toInteger(Object o) {
         if (o == null || o instanceof Integer) return (Integer) o;
         if (o instanceof String) return Integer.valueOf((String) o);
         if (o instanceof Long) return Integer.valueOf(((Long) o).intValue());
@@ -155,7 +161,7 @@ public class X {
         throw new IllegalArgumentException("X.to:" + o.getClass() + " -> " + Integer.class);
     }
 
-    private static Long toLong(Object o) {
+    public static Long toLong(Object o) {
         if (o == null || o instanceof Long) return (Long) o;
         if (o instanceof String) return Long.valueOf((String) o);
         if (o instanceof Integer) return Long.valueOf((Integer) o);
@@ -165,7 +171,7 @@ public class X {
         throw new IllegalArgumentException("X.to:" + o.getClass() + " -> " + Long.class);
     }
 
-    private static String toString(Object o) {
+    public static String toString(Object o) {
         if (o == null || o instanceof String) return (String) o;
         return o.toString();
     }

@@ -1,5 +1,7 @@
 package lithe.core;
 
+import lithe.core.f.FUtils;
+
 import java.io.Serializable;
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
@@ -76,6 +78,10 @@ public class F {
 
     public static <T> T o(Class<T> obj) {
         return null;
+    }
+
+    public static FUtils utils(){
+        return FUtils.getInstance();
     }
 
     public static final class Gate<T, RET> implements Serializable {
@@ -213,6 +219,10 @@ public class F {
         public final T __ = null;
 
         public <RET> Gate<T, RET> gate(RET ret, String method) {
+            return g(ret, method);
+        }
+
+        public <RET> Gate<T, RET> g(RET ret, String method) {
             return new Gate<T, RET>(method);
         }
 
@@ -221,18 +231,30 @@ public class F {
         // }
 
         public Call<T> call(String method) {
+            return c(method);
+        }
+
+        public Call<T> c(String method) {
             return new Call<T>(method);
         }
 
         public <RET> Demon<T, RET> demon(RET ret, String method) {
+            return d(ret, method);
+        }
+
+        public <RET> Demon<T, RET> d(RET ret, String method) {
             return new Demon<T, RET>(method);
         }
 
         public Demon<T, Void> demon(String method) {
+            return d(method);
+        }
+
+        public Demon<T, Void> d(String method) {
             return new Demon<T, Void>(method);
         }
 
-        public static final Erg<Object> getInstance() {
+        private static final Erg<Object> getInstance() {
             return instance;
         }
 
@@ -326,7 +348,17 @@ public class F {
             Object val;
             try {
                 Method wrValue = getMethodInstance(t, (next != null || params == null) ? 0 : params.length);
-                val = next == null ? wrValue.invoke(t, params) : wrValue.invoke(t);
+                if (wrValue.getParameterCount() == 1) {
+                    Object firstPar = params[0];
+                    if (firstPar != null) {
+                        if (!wrValue.getParameterTypes()[0].isAssignableFrom(firstPar.getClass())) {
+                            firstPar = X.to(wrValue.getParameterTypes()[0], firstPar);
+                        }
+                    }
+                    val = wrValue.invoke(t, firstPar);
+                } else {
+                    val = next == null ? wrValue.invoke(t, params) : wrValue.invoke(t);
+                }
             } catch (IllegalAccessException e) {
                 throw new IllegalArgumentException(e);
             } catch (InvocationTargetException e) {
