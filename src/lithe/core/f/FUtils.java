@@ -45,7 +45,7 @@ public final class FUtils {
             if (compare == 0) {
                 for (ComparatorGate<T> cg : X.liSafeIter(nexts)) {
                     compare = cg.compare(o1, o2);
-                    if (compare == 0) {
+                    if (compare != 0) {
                         break;
                     }
                 }
@@ -67,7 +67,7 @@ public final class FUtils {
             if (nexts == null) {
                 nexts = new LinkedList<ComparatorGate<T>>();
             }
-            nexts.addLast(new ComparatorGate<T>(gate));
+            nexts.addLast(new ComparatorGate<T>(g));
             return this;
         }
     }
