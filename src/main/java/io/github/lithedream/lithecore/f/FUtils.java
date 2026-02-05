@@ -1,13 +1,13 @@
-package lithe.core.f;
+package io.github.lithedream.lithecore.f;
 
-
-import lithe.core.F;
-import lithe.core.X;
 
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
+
+import io.github.lithedream.lithecore.F;
+import io.github.lithedream.lithecore.X;
 
 public final class FUtils {
 

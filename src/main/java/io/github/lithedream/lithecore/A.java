@@ -1,12 +1,20 @@
-package lithe.core;
-
-import lithe.core.a.A2;
-import lithe.core.a.A3;
-import lithe.core.a.A4;
-import lithe.core.a.A5;
+package io.github.lithedream.lithecore;
 
 import java.io.Serializable;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import io.github.lithedream.lithecore.a.A2;
+import io.github.lithedream.lithecore.a.A3;
+import io.github.lithedream.lithecore.a.A4;
+import io.github.lithedream.lithecore.a.A5;
 
 public abstract class A implements Serializable, Comparable<A> {
     private Object[] objs;

@@ -1,10 +1,10 @@
-package lithe.core.a;
-
-import lithe.core.A;
+package io.github.lithedream.lithecore.a;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
+
+import io.github.lithedream.lithecore.A;
 
 public final class A2<T0, T1> extends A {
 

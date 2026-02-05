@@ -14,10 +14,10 @@ I like to express a lot of logic by writing as little as possible. This library 
 * F: class that allows getter objects creation and use, to collect simple and complex properties into Lists and Maps; it is also possible to represent method invocations for later use
 * FlashMap: Map implementation optimized for memory and really small datasets
 * FlashSet: Set implementation optimized for memory and really small datasets
-* LitheString: Class for String compression
 * X: general utility static methods
 
 ## Code Example
+
 ```java
 List<T> list = ... ;
 Gate<T,PROPERTY2TYPE> gate = F.$(list).gate(F.y? null : F.o(list).getProperty1().getProperty2(),"getProperty1().getProperty2()");
@@ -51,4 +51,4 @@ RETURNTYPE ret=demon.on(obj,parameter1,parameter2); // calls obj.methodWithParam
 
 ## License
 
-LGPL-2.1
+MIT. See [`LICENSE`](LICENSE).

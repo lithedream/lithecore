@@ -1,7 +1,11 @@
-package lithe.core;
+package io.github.lithedream.lithecore;
 
 import java.io.Serializable;
-import java.util.*;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.NoSuchElementException;
+import java.util.Set;
 
 /**
  * Set implementation for really small sets and minimal memory footprint.

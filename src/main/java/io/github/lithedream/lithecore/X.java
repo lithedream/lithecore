@@ -1,4 +1,4 @@
-package lithe.core;
+package io.github.lithedream.lithecore;
 
 
 import java.math.BigDecimal;

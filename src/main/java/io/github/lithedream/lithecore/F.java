@@ -1,6 +1,4 @@
-package lithe.core;
-
-import lithe.core.f.FUtils;
+package io.github.lithedream.lithecore;
 
 import java.io.Serializable;
 import java.lang.ref.Reference;
@@ -16,6 +14,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.WeakHashMap;
+
+import io.github.lithedream.lithecore.f.FUtils;
 
 /**
  * Class for that allows getter objects creation and use, to collect simple and complex properties into Lists and Maps. It is also possible
