@@ -140,7 +140,6 @@ public final class FlashMap<K, V> implements Map<K, V>, Serializable {
     }
 
 
-    @SuppressWarnings("unchecked")
     @Override
     public V put(K key, V value) {
         if (size == 0) {
@@ -433,6 +432,7 @@ public final class FlashMap<K, V> implements Map<K, V>, Serializable {
     }
 
 
+    @SuppressWarnings("unchecked")
     public boolean equals(Object o) {
         if (o == this) return true;
 

@@ -11,7 +11,7 @@ import java.util.Set;
 import io.github.lithedream.lithecore.A;
 import io.github.lithedream.lithecore.AnyCompare;
 
-public final class A5<V0, V1, V2, V3, V4> extends A implements Serializable, Comparable<A5<V0, V1, V2, V3, V4>> {
+public final class A6<V0, V1, V2, V3, V4, V5> extends A implements Serializable, Comparable<A6<V0, V1, V2, V3, V4, V5>> {
 
 	/**
 	 * 
@@ -28,15 +28,18 @@ public final class A5<V0, V1, V2, V3, V4> extends A implements Serializable, Com
 
 	private V4 v4;
 
-	public A5() {
+	private V5 v5;
+
+	public A6() {
 	}
 
-	public A5(V0 v0, V1 v1, V2 v2, V3 v3, V4 v4) {
+	public A6(V0 v0, V1 v1, V2 v2, V3 v3, V4 v4, V5 v5) {
 		this.v0 = v0;
 		this.v1 = v1;
 		this.v2 = v2;
 		this.v3 = v3;
 		this.v4 = v4;
+		this.v5 = v5;
 	}
 
 	public V0 getV0() {
@@ -79,6 +82,14 @@ public final class A5<V0, V1, V2, V3, V4> extends A implements Serializable, Com
 		this.v4 = v4;
 	}
 
+	public V5 getV5() {
+		return v5;
+	}
+
+	public void setV5(V5 v5) {
+		this.v5 = v5;
+	}
+
 	public V0 g0() {
 		return v0;
 	}
@@ -119,7 +130,15 @@ public final class A5<V0, V1, V2, V3, V4> extends A implements Serializable, Com
 		this.v4 = v4;
 	}
 
-	public int compareTo(A5<V0, V1, V2, V3, V4> o) {
+	public V5 g5() {
+		return v5;
+	}
+
+	public void s5(V5 v5) {
+		this.v5 = v5;
+	}
+
+	public int compareTo(A6<V0, V1, V2, V3, V4, V5> o) {
 		if (this == o) {
 			return 0;
 		}
@@ -143,30 +162,34 @@ public final class A5<V0, V1, V2, V3, V4> extends A implements Serializable, Com
 			return c;
 		}
 		c = AnyCompare.compare(this.v4, o.v4);
+		if (c != 0) {
+			return c;
+		}
+		c = AnyCompare.compare(this.v5, o.v5);
 		return c;
 	}
 
 	@SuppressWarnings("rawtypes")
 	public boolean equals(Object obj) {
-		if (obj instanceof A5 == false) {
+		if (obj instanceof A6 == false) {
 			return false;
 		}
 		if (this == obj) {
 			return true;
 		}
-		A5 rhs = (A5) obj;
+		A6 rhs = (A6) obj;
 		return Objects.equals(v0, rhs.v0) && Objects.equals(v1, rhs.v1) && Objects.equals(v2, rhs.v2)
-				&& Objects.equals(v3, rhs.v3) && Objects.equals(v4, rhs.v4);
+				&& Objects.equals(v3, rhs.v3) && Objects.equals(v4, rhs.v4) && Objects.equals(v5, rhs.v5);
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(v0, v1, v2, v3, v4);
+		return Objects.hash(v0, v1, v2, v3, v4, v5);
 	}
 
 	@Override
 	public int size() {
-		return 5;
+		return 6;
 	}
 
 	@Override
@@ -182,8 +205,10 @@ public final class A5<V0, V1, V2, V3, V4> extends A implements Serializable, Com
 				return g3();
 			case 4:
 				return g4();
+			case 5:
+				return g5();
 			default:
-				throw new IllegalArgumentException("A5.g(" + index + ")");
+				throw new IllegalArgumentException("A6.g(" + index + ")");
 		}
 	}
 
@@ -206,87 +231,106 @@ public final class A5<V0, V1, V2, V3, V4> extends A implements Serializable, Com
 			case 4:
 				s4((V4) o);
 				break;
+			case 5:
+				s5((V5) o);
+				break;
 			default:
-				throw new IllegalArgumentException("A5.s(" + index + ",...)");
+				throw new IllegalArgumentException("A6.s(" + index + ",...)");
 		}
 	}
 
-	public static <K0, K1, K2, K3, K4> List<K0> toList0(Collection<A5<K0, K1, K2, K3, K4>> li) {
+	public static <K0, K1, K2, K3, K4, K5> List<K0> toList0(Collection<A6<K0, K1, K2, K3, K4, K5>> li) {
 		List<K0> list = new ArrayList<K0>();
-		for (A5<K0, K1, K2, K3, K4> a5 : li) {
-			list.add(a5.g0());
+		for (A6<K0, K1, K2, K3, K4, K5> a6 : li) {
+			list.add(a6.g0());
 		}
 		return list;
 	}
 
-	public static <K0, K1, K2, K3, K4> List<K1> toList1(Collection<A5<K0, K1, K2, K3, K4>> li) {
+	public static <K0, K1, K2, K3, K4, K5> List<K1> toList1(Collection<A6<K0, K1, K2, K3, K4, K5>> li) {
 		List<K1> list = new ArrayList<K1>();
-		for (A5<K0, K1, K2, K3, K4> a5 : li) {
-			list.add(a5.g1());
+		for (A6<K0, K1, K2, K3, K4, K5> a6 : li) {
+			list.add(a6.g1());
 		}
 		return list;
 	}
 
-	public static <K0, K1, K2, K3, K4> List<K2> toList2(Collection<A5<K0, K1, K2, K3, K4>> li) {
+	public static <K0, K1, K2, K3, K4, K5> List<K2> toList2(Collection<A6<K0, K1, K2, K3, K4, K5>> li) {
 		List<K2> list = new ArrayList<K2>();
-		for (A5<K0, K1, K2, K3, K4> a5 : li) {
-			list.add(a5.g2());
+		for (A6<K0, K1, K2, K3, K4, K5> a6 : li) {
+			list.add(a6.g2());
 		}
 		return list;
 	}
 
-	public static <K0, K1, K2, K3, K4> List<K3> toList3(Collection<A5<K0, K1, K2, K3, K4>> li) {
+	public static <K0, K1, K2, K3, K4, K5> List<K3> toList3(Collection<A6<K0, K1, K2, K3, K4, K5>> li) {
 		List<K3> list = new ArrayList<K3>();
-		for (A5<K0, K1, K2, K3, K4> a5 : li) {
-			list.add(a5.g3());
+		for (A6<K0, K1, K2, K3, K4, K5> a6 : li) {
+			list.add(a6.g3());
 		}
 		return list;
 	}
 
-	public static <K0, K1, K2, K3, K4> List<K4> toList4(Collection<A5<K0, K1, K2, K3, K4>> li) {
+	public static <K0, K1, K2, K3, K4, K5> List<K4> toList4(Collection<A6<K0, K1, K2, K3, K4, K5>> li) {
 		List<K4> list = new ArrayList<K4>();
-		for (A5<K0, K1, K2, K3, K4> a5 : li) {
-			list.add(a5.g4());
+		for (A6<K0, K1, K2, K3, K4, K5> a6 : li) {
+			list.add(a6.g4());
 		}
 		return list;
 	}
 
-	public static <K0, K1, K2, K3, K4> Set<K0> toSet0(Collection<A5<K0, K1, K2, K3, K4>> li) {
+	public static <K0, K1, K2, K3, K4, K5> List<K5> toList5(Collection<A6<K0, K1, K2, K3, K4, K5>> li) {
+		List<K5> list = new ArrayList<K5>();
+		for (A6<K0, K1, K2, K3, K4, K5> a6 : li) {
+			list.add(a6.g5());
+		}
+		return list;
+	}
+
+	public static <K0, K1, K2, K3, K4, K5> Set<K0> toSet0(Collection<A6<K0, K1, K2, K3, K4, K5>> li) {
 		Set<K0> list = new LinkedHashSet<K0>();
-		for (A5<K0, K1, K2, K3, K4> a5 : li) {
-			list.add(a5.g0());
+		for (A6<K0, K1, K2, K3, K4, K5> a6 : li) {
+			list.add(a6.g0());
 		}
 		return list;
 	}
 
-	public static <K0, K1, K2, K3, K4> Set<K1> toSet1(Collection<A5<K0, K1, K2, K3, K4>> li) {
+	public static <K0, K1, K2, K3, K4, K5> Set<K1> toSet1(Collection<A6<K0, K1, K2, K3, K4, K5>> li) {
 		Set<K1> list = new LinkedHashSet<K1>();
-		for (A5<K0, K1, K2, K3, K4> a5 : li) {
-			list.add(a5.g1());
+		for (A6<K0, K1, K2, K3, K4, K5> a6 : li) {
+			list.add(a6.g1());
 		}
 		return list;
 	}
 
-	public static <K0, K1, K2, K3, K4> Set<K2> toSet2(Collection<A5<K0, K1, K2, K3, K4>> li) {
+	public static <K0, K1, K2, K3, K4, K5> Set<K2> toSet2(Collection<A6<K0, K1, K2, K3, K4, K5>> li) {
 		Set<K2> list = new LinkedHashSet<K2>();
-		for (A5<K0, K1, K2, K3, K4> a5 : li) {
-			list.add(a5.g2());
+		for (A6<K0, K1, K2, K3, K4, K5> a6 : li) {
+			list.add(a6.g2());
 		}
 		return list;
 	}
 
-	public static <K0, K1, K2, K3, K4> Set<K3> toSet3(Collection<A5<K0, K1, K2, K3, K4>> li) {
+	public static <K0, K1, K2, K3, K4, K5> Set<K3> toSet3(Collection<A6<K0, K1, K2, K3, K4, K5>> li) {
 		Set<K3> list = new LinkedHashSet<K3>();
-		for (A5<K0, K1, K2, K3, K4> a5 : li) {
-			list.add(a5.g3());
+		for (A6<K0, K1, K2, K3, K4, K5> a6 : li) {
+			list.add(a6.g3());
 		}
 		return list;
 	}
 
-	public static <K0, K1, K2, K3, K4> Set<K4> toSet4(Collection<A5<K0, K1, K2, K3, K4>> li) {
+	public static <K0, K1, K2, K3, K4, K5> Set<K4> toSet4(Collection<A6<K0, K1, K2, K3, K4, K5>> li) {
 		Set<K4> list = new LinkedHashSet<K4>();
-		for (A5<K0, K1, K2, K3, K4> a5 : li) {
-			list.add(a5.g4());
+		for (A6<K0, K1, K2, K3, K4, K5> a6 : li) {
+			list.add(a6.g4());
+		}
+		return list;
+	}
+
+	public static <K0, K1, K2, K3, K4, K5> Set<K5> toSet5(Collection<A6<K0, K1, K2, K3, K4, K5>> li) {
+		Set<K5> list = new LinkedHashSet<K5>();
+		for (A6<K0, K1, K2, K3, K4, K5> a6 : li) {
+			list.add(a6.g5());
 		}
 		return list;
 	}
