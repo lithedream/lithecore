@@ -21,11 +21,12 @@ import io.github.lithedream.lithecore.f.FUtils;
  * Class for that allows getter objects creation and use, to collect simple and complex properties into Lists and Maps. It is also possible
  * to represent method invocations for later use
  * <p>
+ *
  * <pre>
  *  {@code
  *
  *  List<T> list = ... ;
- *  Gate<T,PROPERTY2TYPE> gate = F.$(list).gate(F.y? null : F.o(list).getProperty1().getProperty2(),"getProperty1().getProperty2()");
+ *  Gate<T,PROPERTY2TYPE> gate = F.$(list).gate(F.y? null : F.__(list).getProperty1().getProperty2(),"getProperty1().getProperty2()");
  *
  *  List<PROPERTY2TYPE> listValues = gate.onList(list); //getProperty1().getProperty2() is called on every T in list
  *
@@ -42,7 +43,7 @@ import io.github.lithedream.lithecore.f.FUtils;
  *
  *  ...
  *  SOMEOBJECT obj = ...;
- *  Demon<T,RETURNTYPE> demon = F.$(obj).demon(F.y? null : obj.methodWithParams(F.o(Parameter1.class),F.o(Parameter2.class)),"methodWithParams()");
+ *  Demon<T,RETURNTYPE> demon = F.$(obj).demon(F.y? null : obj.methodWithParams(F.__(Parameter1.class),F.__(Parameter2.class)),"methodWithParams()");
  *
  *  Parameter1 parameter1=...;
  *  Parameter2 parameter2=...;
@@ -67,16 +68,21 @@ public class F {
         return (Erg<T>) Erg.getInstance();
     }
 
+	@SuppressWarnings("unchecked")
+	public static <T> Erg<T> $(Gate<T,?> obj) {
+		return (Erg<T>) Erg.getInstance();
+	}
+
     @SuppressWarnings("unchecked")
     public static <T> Erg<T> $(Collection<T> obj) {
         return (Erg<T>) Erg.getInstance();
     }
 
-    public static <T> T o(Collection<T> obj) {
+	public static <T> T __(Collection<T> obj) {
         return null;
     }
 
-    public static <T> T o(Class<T> obj) {
+	public static <T> T __(Class<T> obj) {
         return null;
     }
 
@@ -84,7 +90,7 @@ public class F {
         return FUtils.getInstance();
     }
 
-    public static final class Gate<T, RET> implements Serializable {
+	public static final class Gate<T, RET> implements Serializable, LeftGate<T>, RightGate<RET> {
 
         /**
          *
@@ -100,7 +106,7 @@ public class F {
         }
 
         public RET on(T t) throws ThrownException {
-            return get.on(t);
+			return get.on0(t);
         }
 
         public void put(T t, RET value) throws ThrownException {
@@ -108,13 +114,27 @@ public class F {
                 String toRename = get.getLastMethod();
                 if (toRename.startsWith("get")) {
                     toRename = "set" + toRename.substring(3, toRename.length());
-                } else if (toRename.startsWith("is")) {
+				} else if (toRename.startsWith("is")) {
                     toRename = "set" + toRename.substring(2, toRename.length());
-                } else
+				} else
                     throw new IllegalArgumentException("Method " + toRename + " doesn't start with get or is");
                 set = get.copy().renameLastMethod(toRename);
             }
-            set.on(t, value);
+			set.on1(t, value);
+		}
+
+		public void putLenient(T t, RET value) throws ThrownException {
+			if (set == null) {
+				String toRename = get.getLastMethod();
+				if (toRename.startsWith("get")) {
+					toRename = "set" + toRename.substring(3, toRename.length());
+				} else if (toRename.startsWith("is")) {
+					toRename = "set" + toRename.substring(2, toRename.length());
+				} else
+					throw new IllegalArgumentException("Method " + toRename + " doesn't start with get or is");
+				set = get.copy().renameLastMethod(toRename);
+			}
+			set.on1Lenient(t, value);
         }
 
         public <RET_LIST extends Collection<RET>> RET_LIST onList(Collection<T> c, RET_LIST k) throws ThrownException {
@@ -167,6 +187,79 @@ public class F {
             return onValueMap(c, new LinkedHashMap<RET, T>());
         }
 
+		public RET onMax(Collection<T> c) throws ThrownException {
+			RET maxValue = null;
+			if (c != null) {
+				for (T el : c) {
+					RET on = on(el);
+					if (maxValue == null || (on != null && ((Comparable) on).compareTo(maxValue) >= 0)) {
+						maxValue = on;
+					}
+				}
+			}
+			return maxValue;
+		}
+
+		public RET onMin(Collection<T> c) throws ThrownException {
+			RET minValue = null;
+			if (c != null) {
+				for (T el : c) {
+					RET on = on(el);
+					if (minValue == null || (on != null && ((Comparable) on).compareTo(minValue) < 0)) {
+						minValue = on;
+					}
+				}
+			}
+			return minValue;
+		}
+
+		public List<T> byValue(Collection<T> c, RET value) throws ThrownException {
+			List<T> k = new ArrayList<T>();
+			for (T el : c) {
+				RET on = on(el);
+				if (X.equal(on, value)) {
+					k.add(el);
+				}
+			}
+			return k;
+		}
+
+		public List<T> byValues(Collection<T> c, RET... value) throws ThrownException {
+			List<T> k = new ArrayList<T>();
+			for (T el : c) {
+				RET on = on(el);
+				for (RET v : value) {
+					if (X.equal(on, v)) {
+						k.add(el);
+						break;
+					}
+				}
+			}
+			return k;
+		}
+
+		public List<T> byNotNull(Collection<T> c) throws ThrownException {
+			List<T> k = new ArrayList<T>();
+			for (T el : c) {
+				RET on = on(el);
+				if (on != null) {
+					k.add(el);
+				}
+			}
+			return k;
+		}
+
+		public List<T> byNull(Collection<T> c) throws ThrownException {
+			List<T> k = new ArrayList<T>();
+			for (T el : c) {
+				RET on = on(el);
+				if (on == null) {
+					k.add(el);
+				}
+			}
+			return k;
+		}
+
         public Map<RET, List<T>> onValueMapList(Collection<T> c) throws ThrownException {
             return onValueMapList(c, new LinkedHashMap<RET, List<T>>());
         }
@@ -175,6 +268,15 @@ public class F {
         public String toString() {
             return getClass().getSimpleName() + ":" + get.toString();
         }
+
+		@SuppressWarnings("unchecked")
+		public Erg<T> $() {
+			return (Erg<T>) Erg.getInstance();
+		}
+
+		public T __() {
+			return null;
+		}
 
     }
 
@@ -219,10 +321,6 @@ public class F {
         public final T __ = null;
 
         public <RET> Gate<T, RET> gate(RET ret, String method) {
-            return g(ret, method);
-        }
-
-        public <RET> Gate<T, RET> g(RET ret, String method) {
             return new Gate<T, RET>(method);
         }
 
@@ -231,30 +329,18 @@ public class F {
         // }
 
         public Call<T> call(String method) {
-            return c(method);
-        }
-
-        public Call<T> c(String method) {
             return new Call<T>(method);
         }
 
         public <RET> Demon<T, RET> demon(RET ret, String method) {
-            return d(ret, method);
-        }
-
-        public <RET> Demon<T, RET> d(RET ret, String method) {
             return new Demon<T, RET>(method);
         }
 
         public Demon<T, Void> demon(String method) {
-            return d(method);
-        }
-
-        public Demon<T, Void> d(String method) {
             return new Demon<T, Void>(method);
         }
 
-        private static final Erg<Object> getInstance() {
+		public static final Erg<Object> getInstance() {
             return instance;
         }
 
@@ -279,13 +365,13 @@ public class F {
             demon = new Demon<T, Void>(method);
         }
 
-        // public boolean o(String method) {
+        // public boolean __(String method) {
         // demon = new Demon<T, Void>(method);
         // return false;
         // }
 
         public void on(T t) throws ThrownException {
-            demon.on(t);
+			demon.on0(t);
         }
 
         public void onExtra(T t, Object... params) throws ThrownException {
@@ -294,7 +380,7 @@ public class F {
 
         public void onList(Collection<T> c) throws ThrownException {
             for (T el : c) {
-                demon.on(el);
+				demon.on0(el);
             }
         }
 
@@ -348,16 +434,65 @@ public class F {
             Object val;
             try {
                 Method wrValue = getMethodInstance(t, (next != null || params == null) ? 0 : params.length);
-                if (wrValue.getParameterCount() == 1) {
-                    Object firstPar = params[0];
-                    if (firstPar != null) {
-                        if (!wrValue.getParameterTypes()[0].isAssignableFrom(firstPar.getClass())) {
-                            firstPar = X.to(wrValue.getParameterTypes()[0], firstPar);
-                        }
-                    }
-                    val = wrValue.invoke(t, firstPar);
+				val = next == null ? wrValue.invoke(t, params) : wrValue.invoke(t);
+			}
+			catch (IllegalAccessException e) {
+				throw new IllegalArgumentException(e);
+			}
+			catch (InvocationTargetException e) {
+				Throwable cause = e.getCause();
+				if (cause instanceof RuntimeException) {
+					throw (RuntimeException) cause;
+				}
+				if (cause instanceof Error) {
+					throw (Error) cause;
+				}
+				throw new ThrownException(cause);
+			}
+
+			if (next == null || val == null) {
+				return (RET) val;
+			}
+			return next.on(val, params);
+		}
+
+
+		@SuppressWarnings("unchecked")
+		private RET on0(T t) throws ThrownException {
+			Object val;
+			try {
+				Method wrValue = getMethodInstance(t, 0);
+				val = wrValue.invoke(t);
+			}
+			catch (IllegalAccessException e) {
+				throw new IllegalArgumentException(e);
+			}
+			catch (InvocationTargetException e) {
+				Throwable cause = e.getCause();
+				if (cause instanceof RuntimeException) {
+					throw (RuntimeException) cause;
+				}
+				if (cause instanceof Error) {
+					throw (Error) cause;
+				}
+				throw new ThrownException(cause);
+			}
+
+			if (next == null || val == null) {
+				return (RET) val;
+			}
+			return next.on0(val);
+		}
+
+        private RET on1(T t, Object param) throws ThrownException {
+            Object val;
+            try {
+                if (next != null) {
+                    Method wrValue = getMethodInstance(t, 0);
+                    val = wrValue.invoke(t);
                 } else {
-                    val = next == null ? wrValue.invoke(t, params) : wrValue.invoke(t);
+                    Method wrValue = getMethodInstance(t, 1);
+                    val = wrValue.invoke(t, param);
                 }
             } catch (IllegalAccessException e) {
                 throw new IllegalArgumentException(e);
@@ -375,12 +510,44 @@ public class F {
             if (next == null || val == null) {
                 return (RET) val;
             }
-            return next.on(val, params);
+            return next.on1(val, param);
+        }
+
+		private RET on1Lenient(T t, Object param) throws ThrownException {
+			Object val;
+			try {
+				if (next != null) {
+					Method wrValue = getMethodInstance(t, 0);
+					val = wrValue.invoke(t);
+				} else {
+					Method wrValue = getMethodInstance(t, 1);
+					Class classPar;
+					Object converted = param == null || (classPar = wrValue.getParameterTypes()[0]).isAssignableFrom(param.getClass()) ? param
+							: X.to(classPar, param);
+					val = wrValue.invoke(t, converted);
+				}
+			} catch (IllegalAccessException e) {
+				throw new IllegalArgumentException(e);
+			} catch (InvocationTargetException e) {
+				Throwable cause = e.getCause();
+				if (cause instanceof RuntimeException) {
+					throw (RuntimeException) cause;
+				}
+				if (cause instanceof Error) {
+					throw (Error) cause;
+				}
+				throw new ThrownException(cause);
+			}
+
+			if (next == null || val == null) {
+				return (RET) val;
+			}
+			return next.on1Lenient(val, param);
         }
 
         private Method getMethodInstance(T t, int numParams) {
             Method wrValue = wr != null ? wr.get() : null;
-            if (wrValue == null || wrValue.getParameterTypes().length != numParams
+			if (wrValue == null || wrValue.getParameterCount() != numParams
                     || !wrValue.getDeclaringClass().isAssignableFrom(t.getClass())) {
                 wrValue = gsetCache(t.getClass(), method, numParams);
                 wr = new WeakReference<Method>(wrValue);
@@ -392,7 +559,7 @@ public class F {
         public String toString() {
             if (next == null) {
                 return getClass().getSimpleName() + "[" + method + "]";
-            } else {
+			} else {
                 StringBuilder sb = new StringBuilder();
                 sb.append(getClass().getSimpleName()).append("[").append(method);
                 Demon<Object, RET> curs = next;
@@ -413,12 +580,12 @@ public class F {
                 if (numParams == 0) {
                     try {
                         m = cl.getMethod(method);
-                    } catch (NoSuchMethodException e) {
+					} catch (NoSuchMethodException e) {
                         throw new IllegalArgumentException(e);
                     }
-                } else {
+				} else {
                     for (Method me : cl.getMethods()) {
-                        if (me.getName().equals(method) && me.getParameterTypes().length == numParams) {
+						if (me.getName().equals(method) && me.getParameterCount() == numParams) {
                             m = me;
                             break;
                         }
@@ -444,7 +611,7 @@ public class F {
             if (next == null) {
                 method = toRename;
                 wr = null;
-            } else {
+			} else {
                 next.renameLastMethod(toRename);
             }
             return this;
@@ -498,5 +665,13 @@ public class F {
         }
 
     }
+
+	public static interface LeftGate<T> {
+
+	}
+
+	public static interface RightGate<RET> {
+
+	}
 
 }
